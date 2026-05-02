@@ -112,13 +112,16 @@ export function ComparisonDashboard({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Scale className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600">
+              <Scale className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Saved Deals</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                Investment Portfolio
+                <span className="ml-2 text-xs font-normal text-indigo-400">powered by Mubit AI</span>
+              </h2>
               <p className="text-sm text-muted-foreground">
-                {savedDeals.length} saved · {selectedDeals.length} selected for comparison
+                {savedDeals.length} deal{savedDeals.length !== 1 ? 's' : ''} saved · {selectedDeals.length} selected for comparison
               </p>
             </div>
           </div>

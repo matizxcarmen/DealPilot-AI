@@ -255,8 +255,27 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
   const estimatedRent = property.estimatedRent || Math.round(askingPrice * 0.004 / 50) * 50
   const bedrooms = property.bedrooms || 3
   
-  // Loft conversion potential
-  if (propertyType.includes('victorian') || propertyType.includes('terrace') || propertyType.includes('house')) {
+  // Determine if this is a flat/apartment (no structural changes possible)
+  const isFlat = propertyType.includes('flat') || 
+                 propertyType.includes('apartment') || 
+                 propertyType.includes('studio') || 
+                 propertyType.includes('penthouse') || 
+                 propertyType.includes('maisonette') ||
+                 propertyType.includes('duplex')
+  
+  // Determine if this is a house (structural changes possible)
+  const isHouse = propertyType.includes('house') || 
+                  propertyType.includes('terrace') || 
+                  propertyType.includes('detached') || 
+                  propertyType.includes('semi-detached') || 
+                  propertyType.includes('bungalow') || 
+                  propertyType.includes('cottage') ||
+                  propertyType.includes('victorian') ||
+                  propertyType.includes('edwardian') ||
+                  propertyType.includes('georgian')
+  
+  // Loft conversion potential - ONLY for houses with roof access
+  if (isHouse && !propertyType.includes('bungalow')) {
     opportunities.push({
       id: 'opp-loft',
       title: 'Loft Conversion Potential',
@@ -268,8 +287,8 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
     })
   }
 
-  // Extension opportunity
-  if (bedrooms <= 3) {
+  // Extension opportunity - ONLY for houses with garden/land
+  if (isHouse && bedrooms <= 3) {
     opportunities.push({
       id: 'opp-extension',
       title: 'Rear Extension Opportunity',
@@ -281,7 +300,7 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
     })
   }
 
-  // Rental uplift
+  // Rental uplift - applies to ALL property types
   const currentYield = financials.grossYield
   if (currentYield < 4.5) {
     const potentialRent = Math.round(estimatedRent * 1.15 / 50) * 50
@@ -296,8 +315,8 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
     })
   }
 
-  // HMO potential
-  if (bedrooms >= 3 && property.postcode.match(/^(E|N|SE|SW)\d/)) {
+  // HMO potential - ONLY for larger houses, not flats
+  if (isHouse && bedrooms >= 3 && property.postcode.match(/^(E|N|SE|SW)\d/)) {
     opportunities.push({
       id: 'opp-hmo',
       title: 'HMO Conversion Suitability',
@@ -309,7 +328,7 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
     })
   }
 
-  // Modernization
+  // Modernization/refurbishment - applies to ALL property types
   if (property.epcRating && property.epcRating >= 'D') {
     opportunities.push({
       id: 'opp-modern',
@@ -320,6 +339,48 @@ function detectOpportunities(property: Property, financials: FinancialOverview):
       explanation: `EPC rating ${property.epcRating} indicates dated systems. Kitchen/bathroom refresh and energy upgrades could improve to Band C, adding £30-50k value and enhancing lettability.`,
       icon: 'sparkles',
     })
+  }
+  
+  // Flat-specific opportunities
+  if (isFlat) {
+    // Lease extension opportunity for flats
+    if (property.tenure?.toLowerCase() === 'leasehold') {
+      opportunities.push({
+        id: 'opp-lease',
+        title: 'Lease Extension Value',
+        type: 'lease_extension',
+        confidence: 82 + Math.floor(Math.random() * 12),
+        estimatedUplift: Math.round(askingPrice * 0.05 / 1000) * 1000,
+        explanation: `Leasehold flat may benefit from lease extension. Properties with 90+ year leases command premium prices. Statutory right to extend adds long-term security and marketability.`,
+        icon: 'file-text',
+      })
+    }
+    
+    // Interior reconfiguration for flats
+    if (bedrooms >= 1 && bedrooms <= 2) {
+      opportunities.push({
+        id: 'opp-reconfig',
+        title: 'Layout Optimization',
+        type: 'reconfiguration',
+        confidence: 78 + Math.floor(Math.random() * 15),
+        estimatedUplift: Math.round(askingPrice * 0.06 / 1000) * 1000,
+        explanation: `${bedrooms}-bed flat layout may support internal reconfiguration. Open-plan living, improved storage, or en-suite addition could enhance value by 5-8% without structural changes.`,
+        icon: 'layout',
+      })
+    }
+    
+    // Short-let potential for well-located flats
+    if (property.postcode.match(/^(W1|W2|SW1|SW3|SW7|WC1|WC2|EC)/)) {
+      opportunities.push({
+        id: 'opp-shortlet',
+        title: 'Premium Short-Let Potential',
+        type: 'short_let',
+        confidence: 75 + Math.floor(Math.random() * 15),
+        estimatedUplift: Math.round(estimatedRent * 0.4 * 12),
+        explanation: `Prime ${property.postcode} location suitable for short-term letting (90-day rule). Furnished lets can achieve 30-50% premium over standard AST. Strong demand from corporate and tourist market.`,
+        icon: 'calendar',
+      })
+    }
   }
 
   return opportunities.slice(0, 4) // Max 4 opportunities

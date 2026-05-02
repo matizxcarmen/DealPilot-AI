@@ -12,7 +12,7 @@ import { useSavedDeals } from '@/hooks/use-saved-deals'
 import { AgentDashboard } from '@/components/agent-dashboard'
 import { ComparisonDashboard } from '@/components/comparison-dashboard'
 import { useMemo } from 'react'
-import { Bot, ArrowLeft, Bookmark, BookmarkCheck, Scale } from 'lucide-react'
+import { Bot, ArrowLeft, Bookmark, BookmarkCheck, Scale, FolderPlus, Briefcase } from 'lucide-react'
 
 export default function DealPilotPage() {
   const [hasStarted, setHasStarted] = useState(false)
@@ -47,12 +47,12 @@ export default function DealPilotPage() {
     const opportunityCount = opportunities.length
     const totalUplift = opportunities.reduce((sum, opp) => sum + opp.estimatedUplift, 0)
     const askingPrice = property.askingPrice || 0
-    const tenure = property.tenure || 'unknown'
+    const tenure = (property.tenure ?? 'unknown').toString()
     const belowMarket = financials && askingPrice > 0 ? Math.round(financials.projectedUplift / askingPrice * 100) : 0
     const priceDisplay = askingPrice > 0 ? `£${askingPrice.toLocaleString()}` : 'price TBC'
     const epcRating = property.epcRating || 'C'
     
-    return `This ${property.propertyType} in sought-after ${property.postcode} presents a compelling value-add opportunity. Listed at ${priceDisplay} with ${tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${epcRating >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
+    return `This ${property.propertyType || 'property'} in sought-after ${property.postcode || 'London'} presents a compelling value-add opportunity. Listed at ${priceDisplay} with ${tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${(epcRating || 'C') >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
   }, [property, opportunities, financials, verdict])
 
   const handleSubmit = (url: string) => {
@@ -220,44 +220,47 @@ export default function DealPilotPage() {
             </button>
             {status === 'complete' && property && (
               <>
-                {/* Save Deal Button */}
+                {/* Save to Portfolio Button */}
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   onClick={handleSaveDeal}
                   disabled={isCurrentDealSaved}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                     isCurrentDealSaved
-                      ? 'bg-success/20 text-success'
-                      : 'border border-border text-foreground hover:bg-secondary'
+                      ? 'bg-success/20 text-success border border-success/30'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105'
                   }`}
                 >
                   {isCurrentDealSaved ? (
                     <>
-                      <BookmarkCheck className="h-3.5 w-3.5" />
-                      Saved
+                      <BookmarkCheck className="h-4 w-4" />
+                      Added to Portfolio
                     </>
                   ) : (
                     <>
-                      <Bookmark className="h-3.5 w-3.5" />
-                      Save Deal
+                      <FolderPlus className="h-4 w-4" />
+                      Save to Portfolio
                     </>
                   )}
                 </motion.button>
 
-                {/* Saved Deals / Compare Button */}
-                {savedDeals.length > 0 && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.03 }}
-                    onClick={() => setShowComparisonDashboard(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
-                  >
-                    <Scale className="h-3.5 w-3.5" />
-                    Compare ({savedDeals.length})
-                  </motion.button>
-                )}
+                {/* Mubit AI Compare Button */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.03 }}
+                  onClick={() => setShowComparisonDashboard(true)}
+                  className="flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-sm font-medium text-indigo-400 transition-all hover:bg-indigo-500/20 hover:border-indigo-500/50"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  <span>My Portfolio</span>
+                  {savedDeals.length > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-500/30 px-1.5 text-xs font-bold">
+                      {savedDeals.length}
+                    </span>
+                  )}
+                </motion.button>
 
                 {/* Launch AI Agents */}
                 <motion.button
