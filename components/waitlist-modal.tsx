@@ -83,11 +83,12 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-slate-900 shadow-2xl shadow-black/50">
+            <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-[#0f172a] shadow-2xl">
               {/* Header */}
-              <div className="relative border-b border-border/50 bg-gradient-to-r from-primary/10 to-indigo-500/10 px-6 py-5">
+              <div className="relative border-b border-slate-700 bg-gradient-to-r from-emerald-900/50 to-indigo-900/50 px-6 py-5">
                 <button
                   onClick={handleClose}
                   className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -108,7 +109,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
               </div>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="bg-[#0f172a] p-6">
                 {isSuccess ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
