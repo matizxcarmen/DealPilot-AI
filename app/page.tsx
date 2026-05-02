@@ -8,14 +8,17 @@ import { AIActivityFeed } from '@/components/ai-activity-feed'
 import { PropertyOverview } from '@/components/property-overview'
 import { OpportunitiesPanel } from '@/components/opportunities-panel'
 import { useAnalysis } from '@/hooks/use-analysis'
+import { useSavedDeals } from '@/hooks/use-saved-deals'
 import { AgentDashboard } from '@/components/agent-dashboard'
+import { ComparisonDashboard } from '@/components/comparison-dashboard'
 import { useMemo } from 'react'
-import { Bot, ArrowLeft } from 'lucide-react'
+import { Bot, ArrowLeft, Bookmark, BookmarkCheck, Scale } from 'lucide-react'
 
 export default function DealPilotPage() {
   const [hasStarted, setHasStarted] = useState(false)
   const [submittedUrl, setSubmittedUrl] = useState('')
   const [showAgentDashboard, setShowAgentDashboard] = useState(false)
+  const [showComparisonDashboard, setShowComparisonDashboard] = useState(false)
   const {
     property,
     opportunities,
@@ -30,14 +33,26 @@ export default function DealPilotPage() {
     clearError,
   } = useAnalysis()
 
+  const {
+    savedDeals,
+    saveDeal,
+    removeDeal,
+    toggleFavorite,
+    isDealSaved,
+  } = useSavedDeals()
+
   // Generate dynamic AI summary based on property data
   const aiSummary = useMemo(() => {
     if (!property) return ''
     const opportunityCount = opportunities.length
     const totalUplift = opportunities.reduce((sum, opp) => sum + opp.estimatedUplift, 0)
-    const belowMarket = financials ? Math.round(financials.projectedUplift / property.askingPrice * 100) : 0
+    const askingPrice = property.askingPrice || 0
+    const tenure = property.tenure || 'unknown'
+    const belowMarket = financials && askingPrice > 0 ? Math.round(financials.projectedUplift / askingPrice * 100) : 0
+    const priceDisplay = askingPrice > 0 ? `£${askingPrice.toLocaleString()}` : 'price TBC'
+    const epcRating = property.epcRating || 'C'
     
-    return `This ${property.propertyType} in sought-after ${property.postcode} presents a compelling value-add opportunity. Listed at £${property.askingPrice.toLocaleString()} with ${property.tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${property.epcRating >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
+    return `This ${property.propertyType} in sought-after ${property.postcode} presents a compelling value-add opportunity. Listed at ${priceDisplay} with ${tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${epcRating >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
   }, [property, opportunities, financials, verdict])
 
   const handleSubmit = (url: string) => {
@@ -52,9 +67,28 @@ export default function DealPilotPage() {
     reset()
   }
 
+  const handleSaveDeal = () => {
+    if (property && verdict && financials) {
+      saveDeal(property, opportunities, verdict, financials)
+    }
+  }
+
+  const isCurrentDealSaved = property ? isDealSaved(property.address) : false
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background scanline">
-      <Header />
+      <Header onAgentsClick={() => {
+        // If on landing page, scroll to agents section; if in analysis, open agent dashboard
+        if (hasStarted && property && status === 'complete') {
+          setShowAgentDashboard(true)
+        } else {
+          // Scroll to agents section on landing page
+          const agentsSection = document.getElementById('agents-section')
+          if (agentsSection) {
+            agentsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }
+      }} />
 
       <main className="flex flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
@@ -72,6 +106,8 @@ export default function DealPilotPage() {
                 onReset={handleReset}
                 error={error}
                 onClearError={clearError}
+                savedDealsCount={savedDeals.length}
+                onOpenSavedDeals={() => setShowComparisonDashboard(true)}
               />
             </motion.div>
           ) : (
@@ -184,9 +220,50 @@ export default function DealPilotPage() {
             </button>
             {status === 'complete' && property && (
               <>
+                {/* Save Deal Button */}
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  onClick={handleSaveDeal}
+                  disabled={isCurrentDealSaved}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isCurrentDealSaved
+                      ? 'bg-success/20 text-success'
+                      : 'border border-border text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  {isCurrentDealSaved ? (
+                    <>
+                      <BookmarkCheck className="h-3.5 w-3.5" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="h-3.5 w-3.5" />
+                      Save Deal
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Saved Deals / Compare Button */}
+                {savedDeals.length > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.03 }}
+                    onClick={() => setShowComparisonDashboard(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                  >
+                    <Scale className="h-3.5 w-3.5" />
+                    Compare ({savedDeals.length})
+                  </motion.button>
+                )}
+
+                {/* Launch AI Agents */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.05 }}
                   onClick={() => setShowAgentDashboard(true)}
                   className="relative flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-emerald-500 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
                 >
@@ -200,14 +277,6 @@ export default function DealPilotPage() {
                   <span className="flex h-5 items-center rounded-full bg-white/20 px-1.5 text-[10px] font-bold">
                     4
                   </span>
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.05 }}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
-                >
-                  Export Report
                 </motion.button>
               </>
             )}
@@ -226,6 +295,15 @@ export default function DealPilotPage() {
           onClose={() => setShowAgentDashboard(false)}
         />
       )}
+
+      {/* Comparison Dashboard Modal */}
+      <ComparisonDashboard
+        isVisible={showComparisonDashboard}
+        onClose={() => setShowComparisonDashboard(false)}
+        savedDeals={savedDeals}
+        onRemoveDeal={removeDeal}
+        onToggleFavorite={toggleFavorite}
+      />
     </div>
   )
 }

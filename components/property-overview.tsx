@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bed,
@@ -13,10 +14,13 @@ import {
   Building,
   MapPin,
   PoundSterling,
+  ImageOff,
 } from 'lucide-react'
 import type { Property, FinancialOverview } from '@/lib/types'
 import Image from 'next/image'
 import { ContactRealtor } from './contact-realtor'
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
 
 interface PropertyOverviewProps {
   property: Property | null
@@ -85,6 +89,21 @@ export function PropertyOverview({
   summary,
   isLoading,
 }: PropertyOverviewProps) {
+  const [imageError, setImageError] = useState(false)
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
+
+  // Reset image state when property changes
+  if (property && imageSrc !== property.imageUrl && !imageError) {
+    setImageSrc(property.imageUrl)
+    setImageError(false)
+  }
+
+  const handleImageError = () => {
+    setImageError(true)
+  }
+
+  const displayImage = imageError ? FALLBACK_IMAGE : (property?.imageUrl || FALLBACK_IMAGE)
+
   if (!property) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -118,11 +137,13 @@ export function PropertyOverview({
           className="relative mb-4 aspect-[16/9] overflow-hidden rounded-lg border border-border/50"
         >
           <Image
-            src={property.imageUrl}
+            src={displayImage}
             alt={property.address}
             fill
             className="object-cover"
             priority
+            onError={handleImageError}
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
           
@@ -130,7 +151,7 @@ export function PropertyOverview({
           <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-background/90 px-3 py-1.5 backdrop-blur-sm">
             <PoundSterling className="h-4 w-4 text-success" />
             <span className="text-lg font-bold text-foreground">
-              {property.askingPrice.toLocaleString()}
+              {property.askingPrice ? property.askingPrice.toLocaleString() : 'Price Unknown'}
             </span>
           </div>
 

@@ -15,7 +15,8 @@ import {
   Building2,
   Brain,
   Target,
-  ChevronRight
+  ChevronRight,
+  Scale,
 } from 'lucide-react'
 import { PropertyInput } from './property-input'
 import type { AnalysisError } from '@/hooks/use-analysis'
@@ -26,6 +27,8 @@ interface LandingPageProps {
   onReset: () => void
   error?: AnalysisError | null
   onClearError?: () => void
+  savedDealsCount?: number
+  onOpenSavedDeals?: () => void
 }
 
 const agents = [
@@ -87,7 +90,7 @@ const platforms = [
   'PrimeLocation',
 ]
 
-export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearError }: LandingPageProps) {
+export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearError, savedDealsCount = 0, onOpenSavedDeals }: LandingPageProps) {
   const inputSectionRef = useRef<HTMLDivElement>(null)
 
   const scrollToInput = () => {
@@ -110,17 +113,27 @@ export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearErro
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl">
-          {/* Badge */}
+          {/* Badge Row */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex justify-center"
+            className="mb-6 flex flex-wrap items-center justify-center gap-3"
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 backdrop-blur-sm">
               <Bot className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">Multi-Agent AI System</span>
               <ChevronRight className="h-4 w-4 text-primary/60" />
             </div>
+            
+            {savedDealsCount > 0 && onOpenSavedDeals && (
+              <button
+                onClick={onOpenSavedDeals}
+                className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-secondary/50 px-4 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-secondary hover:text-foreground"
+              >
+                <Scale className="h-4 w-4" />
+                <span>Saved Deals ({savedDealsCount})</span>
+              </button>
+            )}
           </motion.div>
 
           {/* Headline */}
@@ -180,7 +193,7 @@ export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearErro
       </section>
 
       {/* Agents Section */}
-      <section className="border-t border-border/50 bg-card/30 px-4 py-16">
+      <section id="agents-section" className="border-t border-border/50 bg-card/30 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
