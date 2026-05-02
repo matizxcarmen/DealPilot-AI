@@ -339,69 +339,136 @@ function extractFromHtml(html: string, propertyId: string, sourceUrl: string, pl
     html.match(/(terraced|semi-detached|detached|flat|apartment|bungalow|maisonette|house|cottage|studio|penthouse|duplex)/i)?.[1]
   if (!propertyTypeMatch) unknownFields.push('propertyType')
   
-  // Extract images based on platform
+  // Extract images based on platform - prioritize main property image
   const images: string[] = []
   
-  // og:image meta tag (works across platforms) - highest priority
-  const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ||
-    html.match(/<meta[^>]*content="([^"]+)"[^>]*property="og:image"/i)
-  if (ogImageMatch?.[1]) {
-    const cleanOgImage = ogImageMatch[1].replace(/&amp;/g, '&')
-    images.push(cleanOgImage)
-  }
+  // Helper to clean URLs
+  const cleanImageUrl = (url: string) => url.replace(/&amp;/g, '&').replace(/\\u002F/g, '/').replace(/\\/g, '')
   
-  // Twitter image as fallback
-  const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]+)"/i)
-  if (twitterImageMatch?.[1] && !images.includes(twitterImageMatch[1])) {
-    images.push(twitterImageMatch[1].replace(/&amp;/g, '&'))
+  // Helper to check if image is a property photo (not logo, agent photo, etc)
+  const isPropertyImage = (url: string) => {
+    const lowerUrl = url.toLowerCase()
+    return !lowerUrl.includes('logo') && 
+           !lowerUrl.includes('icon') && 
+           !lowerUrl.includes('sprite') && 
+           !lowerUrl.includes('placeholder') &&
+           !lowerUrl.includes('avatar') &&
+           !lowerUrl.includes('agent') &&
+           !lowerUrl.includes('branch') &&
+           !lowerUrl.includes('profile') &&
+           !lowerUrl.includes('badge') &&
+           !lowerUrl.includes('floorplan') &&
+           !lowerUrl.includes('floor-plan') &&
+           !lowerUrl.includes('epc') &&
+           !lowerUrl.includes('map') &&
+           (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg') || lowerUrl.includes('.png') || lowerUrl.includes('.webp'))
   }
-  
-  // Platform-specific image extraction
+
+  // Platform-specific image extraction - most reliable
   if (platform.name === 'Rightmove') {
-    // Rightmove stores images in JSON data
-    const imageDataMatches = html.matchAll(/"imageUrl":\s*"([^"]+)"/gi)
-    for (const match of imageDataMatches) {
-      const cleanUrl = match[1].replace(/\\u002F/g, '/').replace(/\\/g, '').replace(/&amp;/g, '&')
-      if (!images.includes(cleanUrl) && images.length < 10 && cleanUrl.includes('media.rightmove')) {
-        images.push(cleanUrl)
+    // Rightmove: Look for main image in propertyData JSON
+    const propertyDataMatch = html.match(/window\.PAGE_MODEL\s*=\s*({[\s\S]*?});?\s*<\/script>/i) ||
+      html.match(/propertyData\s*[:=]\s*({[\s\S]*?})\s*[,;]/i)
+    
+    if (propertyDataMatch) {
+      try {
+        // Extract image URLs from JSON-like structure
+        const mainImageMatch = html.match(/"mainMapImageSrc":\s*"([^"]+)"/i) ||
+          html.match(/"propertyImage":\s*"([^"]+)"/i) ||
+          html.match(/"heroImage":\s*"([^"]+)"/i)
+        if (mainImageMatch?.[1]) {
+          const mainImg = cleanImageUrl(mainImageMatch[1])
+          if (isPropertyImage(mainImg)) images.push(mainImg)
+        }
+      } catch {}
+    }
+    
+    // Rightmove: Gallery images from JSON
+    const galleryMatches = html.matchAll(/"url":\s*"(https?:\/\/media\.rightmove\.co\.uk\/[^"]+)"/gi)
+    for (const match of galleryMatches) {
+      const cleanUrl = cleanImageUrl(match[1])
+      if (!images.includes(cleanUrl) && images.length < 10 && isPropertyImage(cleanUrl)) {
+        // Prefer larger versions (look for _max_ or high res indicators)
+        const largeUrl = cleanUrl.replace(/_135x100\./, '_max_296x197.').replace(/\/dir\//, '/max/')
+        images.push(images.length === 0 ? largeUrl : cleanUrl)
       }
     }
     
-    // Also check for srcset patterns
-    const srcsetMatches = html.matchAll(/srcset="([^"]*media\.rightmove\.co\.uk[^"]+)"/gi)
-    for (const match of srcsetMatches) {
-      const firstUrl = match[1].split(',')[0]?.trim().split(' ')[0]
-      if (firstUrl && !images.includes(firstUrl) && images.length < 10) {
-        images.push(firstUrl.replace(/&amp;/g, '&'))
+    // Rightmove: srcset for main gallery image
+    const mainGalleryMatch = html.match(/class="[^"]*gallery[^"]*"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/i)
+    if (mainGalleryMatch?.[1] && isPropertyImage(mainGalleryMatch[1])) {
+      const cleanUrl = cleanImageUrl(mainGalleryMatch[1])
+      if (!images.includes(cleanUrl)) images.unshift(cleanUrl) // Add to front
+    }
+  }
+  
+  if (platform.name === 'Zoopla') {
+    // Zoopla: Look for main image in gallery
+    const zooplaMainMatch = html.match(/data-testid="gallery-image-0"[^>]*src="([^"]+)"/i) ||
+      html.match(/class="[^"]*dp-gallery[^"]*"[\s\S]*?<img[^>]*src="([^"]+)"/i)
+    if (zooplaMainMatch?.[1] && isPropertyImage(zooplaMainMatch[1])) {
+      images.push(cleanImageUrl(zooplaMainMatch[1]))
+    }
+    
+    // Zoopla: Gallery images from data
+    const zooplaGallery = html.matchAll(/"(https?:\/\/(?:lc|st)\.zoocdn\.com\/[^"]+)"/gi)
+    for (const match of zooplaGallery) {
+      const cleanUrl = cleanImageUrl(match[1])
+      if (!images.includes(cleanUrl) && images.length < 10 && isPropertyImage(cleanUrl)) {
+        images.push(cleanUrl)
       }
     }
   }
   
-  // Generic media pattern extraction
+  // og:image meta tag - usually the main property image
+  const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ||
+    html.match(/<meta[^>]*content="([^"]+)"[^>]*property="og:image"/i)
+  if (ogImageMatch?.[1]) {
+    const cleanOgImage = cleanImageUrl(ogImageMatch[1])
+    if (isPropertyImage(cleanOgImage) && !images.includes(cleanOgImage)) {
+      images.unshift(cleanOgImage) // Add to front as it's usually the best one
+    }
+  }
+  
+  // Twitter image as additional source
+  const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]+)"/i)
+  if (twitterImageMatch?.[1]) {
+    const cleanUrl = cleanImageUrl(twitterImageMatch[1])
+    if (isPropertyImage(cleanUrl) && !images.includes(cleanUrl)) {
+      images.push(cleanUrl)
+    }
+  }
+  
+  // Generic media pattern extraction as fallback
   const mediaPattern = platform.mediaPattern
   const imgMatches = html.matchAll(new RegExp(`"(https?://[^"]*${mediaPattern.source}[^"]*)"`, 'gi'))
   for (const match of imgMatches) {
-    const cleanUrl = match[1].replace(/\\u002F/g, '/').replace(/\\/g, '').replace(/&amp;/g, '&')
-    if (!images.includes(cleanUrl) && images.length < 10 && !cleanUrl.includes('_max_') && cleanUrl.includes('_max_')) {
-      // Skip tiny thumbnails, prefer larger images
+    const cleanUrl = cleanImageUrl(match[1])
+    if (!images.includes(cleanUrl) && images.length < 10 && isPropertyImage(cleanUrl)) {
       images.push(cleanUrl)
     }
   }
   
-  // Generic image extraction as last resort
-  const genericImgMatches = html.matchAll(/src="(https:\/\/[^"]+\.(?:jpg|jpeg|png|webp)(?:\?[^"]*)?)"/gi)
+  // Generic high-quality image extraction as last resort
+  const genericImgMatches = html.matchAll(/<img[^>]*src="(https:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi)
   for (const match of genericImgMatches) {
-    const cleanUrl = match[1].replace(/&amp;/g, '&')
-    if (!images.includes(cleanUrl) && images.length < 10 && 
-        !cleanUrl.includes('logo') && !cleanUrl.includes('icon') && 
-        !cleanUrl.includes('sprite') && !cleanUrl.includes('placeholder')) {
-      images.push(cleanUrl)
+    const cleanUrl = cleanImageUrl(match[1])
+    // Only add if it looks like a property image (large dimensions in URL or specific patterns)
+    if (!images.includes(cleanUrl) && images.length < 10 && isPropertyImage(cleanUrl)) {
+      // Check for size indicators in URL suggesting it's a main image
+      if (cleanUrl.includes('800') || cleanUrl.includes('1024') || cleanUrl.includes('max') || cleanUrl.includes('large')) {
+        images.push(cleanUrl)
+      }
     }
   }
   
-  // If still no images, use stock fallback
+  // If still no images, use appropriate stock fallback based on property type
   if (images.length === 0) {
-    const stockImages = [
+    const isFlat = propertyTypeMatch && /flat|apartment|studio|penthouse|maisonette/i.test(propertyTypeMatch)
+    const stockImages = isFlat ? [
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80', // Modern apartment interior
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80', // Apartment living room
+    ] : [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
       'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
