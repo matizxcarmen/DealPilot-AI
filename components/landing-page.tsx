@@ -16,7 +16,7 @@ import {
   Brain,
   Target,
   ChevronRight,
-  Scale,
+  Briefcase,
 } from 'lucide-react'
 import { PropertyInput } from './property-input'
 import type { AnalysisError } from '@/hooks/use-analysis'
@@ -128,10 +128,13 @@ export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearErro
             {savedDealsCount > 0 && onOpenSavedDeals && (
               <button
                 onClick={onOpenSavedDeals}
-                className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-secondary/50 px-4 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-secondary hover:text-foreground"
+                className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 px-4 py-1.5 text-sm font-medium text-indigo-400 backdrop-blur-sm transition-all hover:border-indigo-500/50 hover:from-blue-600/20 hover:to-indigo-600/20"
               >
-                <Scale className="h-4 w-4" />
-                <span>Saved Deals ({savedDealsCount})</span>
+                <Briefcase className="h-4 w-4" />
+                <span>My Portfolio</span>
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-500/30 px-1 text-xs font-bold">
+                  {savedDealsCount}
+                </span>
               </button>
             )}
           </motion.div>
