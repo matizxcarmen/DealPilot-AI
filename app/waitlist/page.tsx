@@ -13,11 +13,7 @@ import {
   User,
   Phone,
   MessageSquare,
-  Bot,
   TrendingUp,
-  Search,
-  Calendar,
-  ClipboardList,
   Eye,
   Brain,
   Zap
@@ -68,45 +64,6 @@ export default function WaitlistPage() {
       setIsSubmitting(false)
     }
   }
-
-  const agents = [
-    { 
-      icon: Calendar, 
-      name: 'Viewing Agent', 
-      desc: 'Automatically contacts estate agents and schedules property viewings on your behalf',
-      color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20',
-      iconColor: 'text-blue-400'
-    },
-    { 
-      icon: Search, 
-      name: 'Market Intel Agent', 
-      desc: 'Searches across Rightmove, Zoopla, and OnTheMarket to track listing history and price changes',
-      color: 'from-purple-500 to-pink-500',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/20',
-      iconColor: 'text-purple-400'
-    },
-    { 
-      icon: ClipboardList, 
-      name: 'Workflow Agent', 
-      desc: 'Creates personalized deal workflows with actionable next steps from research to completion',
-      color: 'from-amber-500 to-orange-500',
-      bgColor: 'bg-amber-500/10',
-      borderColor: 'border-amber-500/20',
-      iconColor: 'text-amber-400'
-    },
-    { 
-      icon: MessageSquare, 
-      name: 'Contact Agent', 
-      desc: 'Reaches out to realtors to gather missing property information and negotiate on your behalf',
-      color: 'from-emerald-500 to-teal-500',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/20',
-      iconColor: 'text-emerald-400'
-    },
-  ]
 
   const features = [
     { icon: Brain, label: 'AI-Powered Analysis', desc: 'Deep property insights' },
@@ -164,36 +121,7 @@ export default function WaitlistPage() {
                 Get notified when we launch with exclusive early-bird pricing.
               </p>
 
-              {/* AI Agents Section */}
-              <div className="mb-8">
-                <div className="mb-4 flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-emerald-400" />
-                  <h3 className="text-lg font-semibold text-white">4 Autonomous AI Agents</h3>
-                </div>
-                <div className="space-y-3">
-                  {agents.map((agent, i) => (
-                    <motion.div
-                      key={agent.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + i * 0.1 }}
-                      className={`rounded-xl border ${agent.borderColor} ${agent.bgColor} p-4`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`rounded-lg bg-gradient-to-br ${agent.color} p-2`}>
-                          <agent.icon className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-white">{agent.name}</p>
-                          <p className="text-sm text-slate-400">{agent.desc}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Additional Features */}
+              {/* Features */}
               <div className="grid grid-cols-2 gap-3">
                 {features.map((feature, i) => (
                   <motion.div
