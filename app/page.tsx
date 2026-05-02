@@ -47,12 +47,12 @@ export default function DealPilotPage() {
     const opportunityCount = opportunities.length
     const totalUplift = opportunities.reduce((sum, opp) => sum + opp.estimatedUplift, 0)
     const askingPrice = property.askingPrice || 0
-    const tenure = property.tenure || 'unknown'
+    const tenure = (property.tenure ?? 'unknown').toString()
     const belowMarket = financials && askingPrice > 0 ? Math.round(financials.projectedUplift / askingPrice * 100) : 0
     const priceDisplay = askingPrice > 0 ? `£${askingPrice.toLocaleString()}` : 'price TBC'
     const epcRating = property.epcRating || 'C'
     
-    return `This ${property.propertyType} in sought-after ${property.postcode} presents a compelling value-add opportunity. Listed at ${priceDisplay} with ${tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${epcRating >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
+    return `This ${property.propertyType || 'property'} in sought-after ${property.postcode || 'London'} presents a compelling value-add opportunity. Listed at ${priceDisplay} with ${tenure.toLowerCase()} tenure, the property sits approximately ${belowMarket}% below its potential value. ${opportunityCount > 0 ? `Key upside vectors include ${opportunities.slice(0, 2).map(o => o.title.toLowerCase()).join(' and ')}.` : ''} ${financials ? `The combination of ${(epcRating || 'C') >= 'D' ? 'improvement potential' : 'solid fundamentals'}, strong rental demand in Zone 2, and ${opportunityCount} distinct value creation pathway${opportunityCount !== 1 ? 's' : ''} makes this ${verdict?.recommendation === 'strong_buy' ? 'an exceptional' : 'a solid'} investment prospect with potential uplift of £${(totalUplift / 1000).toFixed(0)}k.` : ''}`
   }, [property, opportunities, financials, verdict])
 
   const handleSubmit = (url: string) => {
