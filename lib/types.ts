@@ -163,3 +163,16 @@ export interface AnalysisState {
   activityLog: AIActivityStep[]
   progress: number
 }
+
+// Saved Deals & Comparison Types
+export interface SavedDeal {
+  id: string
+  savedAt: Date
+  property: Property
+  opportunities: HiddenOpportunity[]
+  verdict: InvestmentVerdict
+  financials: FinancialOverview
+  notes?: string
+  tags?: string[]
+  isFavorite?: boolean
+}
