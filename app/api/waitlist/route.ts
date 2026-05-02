@@ -1,18 +1,7 @@
 import { NextResponse } from 'next/server'
+import { neon } from '@neondatabase/serverless'
 
-interface WaitlistEntry {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-  queries?: string
-  createdAt: string
-}
-
-// In-memory storage (will reset on server restart)
-// In production, connect this to a database like Supabase, Neon, or MongoDB
-const waitlistEntries: WaitlistEntry[] = []
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
@@ -37,41 +26,31 @@ export async function POST(request: Request) {
     }
 
     // Check for duplicate email
-    const existingEntry = waitlistEntries.find(
-      (entry) => entry.email.toLowerCase() === email.toLowerCase()
-    )
-    if (existingEntry) {
+    const existingEntry = await sql`
+      SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${email})
+    `
+    
+    if (existingEntry.length > 0) {
       return NextResponse.json(
         { error: 'This email is already on the waitlist' },
         { status: 409 }
       )
     }
 
-    // Create new entry
-    const newEntry: WaitlistEntry = {
-      id: `wl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone?.trim() || undefined,
-      queries: queries?.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    }
+    // Insert new entry
+    await sql`
+      INSERT INTO waitlist (first_name, last_name, email, phone, message)
+      VALUES (${firstName.trim()}, ${lastName.trim()}, ${email.toLowerCase().trim()}, ${phone?.trim() || null}, ${queries?.trim() || null})
+    `
 
-    // Store in memory (replace with database in production)
-    waitlistEntries.push(newEntry)
-
-    // Log for demo purposes
-    console.log('[Waitlist] New signup:', {
-      name: `${newEntry.firstName} ${newEntry.lastName}`,
-      email: newEntry.email,
-      totalSignups: waitlistEntries.length,
-    })
+    // Get total count for position
+    const countResult = await sql`SELECT COUNT(*) as count FROM waitlist`
+    const position = Number(countResult[0]?.count || 1)
 
     return NextResponse.json({
       success: true,
       message: 'Successfully joined the waitlist!',
-      position: waitlistEntries.length,
+      position,
     })
   } catch (error) {
     console.error('[Waitlist] Error:', error)
@@ -83,8 +62,13 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  // Return count only (for displaying waitlist size)
-  return NextResponse.json({
-    count: waitlistEntries.length,
-  })
+  try {
+    const result = await sql`SELECT COUNT(*) as count FROM waitlist`
+    return NextResponse.json({
+      count: Number(result[0]?.count || 0),
+    })
+  } catch (error) {
+    console.error('[Waitlist] Error fetching count:', error)
+    return NextResponse.json({ count: 0 })
+  }
 }
