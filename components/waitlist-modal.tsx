@@ -75,7 +75,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
           />
 
           {/* Modal */}
@@ -83,9 +83,9 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
+            <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-slate-900 shadow-2xl shadow-black/50">
               {/* Header */}
               <div className="relative border-b border-border/50 bg-gradient-to-r from-primary/10 to-indigo-500/10 px-6 py-5">
                 <button
@@ -145,7 +145,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                           required
                           value={formData.firstName}
                           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                           placeholder="John"
                         />
                       </div>
@@ -159,7 +159,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                           required
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                           placeholder="Smith"
                         />
                       </div>
@@ -176,7 +176,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -192,7 +192,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="+44 7700 900000"
                       />
                     </div>
@@ -208,7 +208,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                         value={formData.queries}
                         onChange={(e) => setFormData({ ...formData, queries: e.target.value })}
                         rows={3}
-                        className="w-full resize-none rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="Any features you'd like to see? Questions about the platform?"
                       />
                     </div>
