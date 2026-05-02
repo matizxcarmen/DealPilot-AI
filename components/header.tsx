@@ -31,19 +31,6 @@ export function Header() {
         </span>
       </div>
 
-      {/* Nav Links - Hidden on mobile */}
-      <nav className="hidden items-center gap-6 md:flex">
-        <a href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-          Features
-        </a>
-        <a href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-          Pricing
-        </a>
-        <a href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-          Docs
-        </a>
-      </nav>
-
       {/* Actions */}
       <div className="flex items-center gap-2">
         {/* Agent Status */}
