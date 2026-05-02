@@ -1,24 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Bot, Zap } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Sparkles, Bot, Rocket } from 'lucide-react'
+import Link from 'next/link'
 
 interface HeaderProps {
   onAgentsClick?: () => void
 }
 
 export function Header({ onAgentsClick }: HeaderProps) {
-  const scrollToInput = () => {
-    const inputSection = document.querySelector('input[type="text"], input[type="url"]')
-    if (inputSection) {
-      inputSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      setTimeout(() => {
-        (inputSection as HTMLInputElement).focus()
-      }, 500)
-    }
-  }
-
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}
@@ -46,21 +36,13 @@ export function Header({ onAgentsClick }: HeaderProps) {
           <span className="text-xs font-medium text-primary">4 Agents Ready</span>
         </button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-sm text-muted-foreground hover:text-foreground"
+        <Link
+          href="/waitlist"
+          className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-primary to-indigo-500 px-3 py-1.5 text-sm font-medium text-white shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30"
         >
-          Sign In
-        </Button>
-        <Button
-          size="sm"
-          onClick={scrollToInput}
-          className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <Zap className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Get Started</span>
-        </Button>
+          <Rocket className="h-3.5 w-3.5" />
+          <span>Join Waitlist</span>
+        </Link>
       </div>
     </motion.header>
   )
