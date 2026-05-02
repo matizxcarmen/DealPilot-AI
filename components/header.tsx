@@ -1,14 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Bot, Zap } from 'lucide-react'
+import { Sparkles, Bot, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { WaitlistModal } from './waitlist-modal'
 
 interface HeaderProps {
   onAgentsClick?: () => void
 }
 
 export function Header({ onAgentsClick }: HeaderProps) {
+  const [showWaitlist, setShowWaitlist] = useState(false)
   const scrollToInput = () => {
     const inputSection = document.querySelector('input[type="text"], input[type="url"]')
     if (inputSection) {
@@ -47,21 +50,17 @@ export function Header({ onAgentsClick }: HeaderProps) {
         </button>
 
         <Button
-          variant="ghost"
           size="sm"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          onClick={() => setShowWaitlist(true)}
+          className="gap-1.5 bg-gradient-to-r from-primary to-indigo-500 text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
         >
-          Sign In
-        </Button>
-        <Button
-          size="sm"
-          onClick={scrollToInput}
-          className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <Zap className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Get Started</span>
+          <Rocket className="h-3.5 w-3.5" />
+          <span>Join Waitlist</span>
         </Button>
       </div>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal isOpen={showWaitlist} onClose={() => setShowWaitlist(false)} />
     </motion.header>
   )
 }
