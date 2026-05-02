@@ -342,28 +342,71 @@ function extractFromHtml(html: string, propertyId: string, sourceUrl: string, pl
   // Extract images based on platform
   const images: string[] = []
   
-  // og:image meta tag (works across platforms)
-  const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i)
+  // og:image meta tag (works across platforms) - highest priority
+  const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ||
+    html.match(/<meta[^>]*content="([^"]+)"[^>]*property="og:image"/i)
   if (ogImageMatch?.[1]) {
-    images.push(ogImageMatch[1])
+    const cleanOgImage = ogImageMatch[1].replace(/&amp;/g, '&')
+    images.push(cleanOgImage)
+  }
+  
+  // Twitter image as fallback
+  const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]+)"/i)
+  if (twitterImageMatch?.[1] && !images.includes(twitterImageMatch[1])) {
+    images.push(twitterImageMatch[1].replace(/&amp;/g, '&'))
   }
   
   // Platform-specific image extraction
+  if (platform.name === 'Rightmove') {
+    // Rightmove stores images in JSON data
+    const imageDataMatches = html.matchAll(/"imageUrl":\s*"([^"]+)"/gi)
+    for (const match of imageDataMatches) {
+      const cleanUrl = match[1].replace(/\\u002F/g, '/').replace(/\\/g, '').replace(/&amp;/g, '&')
+      if (!images.includes(cleanUrl) && images.length < 10 && cleanUrl.includes('media.rightmove')) {
+        images.push(cleanUrl)
+      }
+    }
+    
+    // Also check for srcset patterns
+    const srcsetMatches = html.matchAll(/srcset="([^"]*media\.rightmove\.co\.uk[^"]+)"/gi)
+    for (const match of srcsetMatches) {
+      const firstUrl = match[1].split(',')[0]?.trim().split(' ')[0]
+      if (firstUrl && !images.includes(firstUrl) && images.length < 10) {
+        images.push(firstUrl.replace(/&amp;/g, '&'))
+      }
+    }
+  }
+  
+  // Generic media pattern extraction
   const mediaPattern = platform.mediaPattern
   const imgMatches = html.matchAll(new RegExp(`"(https?://[^"]*${mediaPattern.source}[^"]*)"`, 'gi'))
   for (const match of imgMatches) {
-    const cleanUrl = match[1].replace(/\\u002F/g, '/').replace(/\\/g, '')
-    if (!images.includes(cleanUrl) && images.length < 10) {
+    const cleanUrl = match[1].replace(/\\u002F/g, '/').replace(/\\/g, '').replace(/&amp;/g, '&')
+    if (!images.includes(cleanUrl) && images.length < 10 && !cleanUrl.includes('_max_') && cleanUrl.includes('_max_')) {
+      // Skip tiny thumbnails, prefer larger images
       images.push(cleanUrl)
     }
   }
   
-  // Generic image extraction
+  // Generic image extraction as last resort
   const genericImgMatches = html.matchAll(/src="(https:\/\/[^"]+\.(?:jpg|jpeg|png|webp)(?:\?[^"]*)?)"/gi)
   for (const match of genericImgMatches) {
-    if (!images.includes(match[1]) && images.length < 10 && !match[1].includes('logo') && !match[1].includes('icon')) {
-      images.push(match[1])
+    const cleanUrl = match[1].replace(/&amp;/g, '&')
+    if (!images.includes(cleanUrl) && images.length < 10 && 
+        !cleanUrl.includes('logo') && !cleanUrl.includes('icon') && 
+        !cleanUrl.includes('sprite') && !cleanUrl.includes('placeholder')) {
+      images.push(cleanUrl)
     }
+  }
+  
+  // If still no images, use stock fallback
+  if (images.length === 0) {
+    const stockImages = [
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    ]
+    images.push(stockImages[Math.floor(Math.random() * stockImages.length)])
   }
   
   // Extract tenure
@@ -441,6 +484,15 @@ function generateFallbackData(propertyId: string, url: string, platform: Platfor
   const streets = ['Oakwood', 'Victoria', 'Albert', 'Park', 'Station', 'Church', 'High', 'Grove', 'Hill', 'Garden']
   const roadTypes = ['Road', 'Street', 'Avenue', 'Lane', 'Gardens', 'Close', 'Way']
   
+  // Stock property images for fallback
+  const stockImages = [
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
+  ]
+  const randomImage = stockImages[Math.floor(Math.random() * stockImages.length)]
+
   return {
     address: `${Math.floor(Math.random() * 200)} ${streets[Math.floor(Math.random() * streets.length)]} ${roadTypes[Math.floor(Math.random() * roadTypes.length)]}, ${capitalizeFirst(area)}`,
     askingPrice: Math.round(areaData.avgPrice * variance / 1000) * 1000,
@@ -449,7 +501,7 @@ function generateFallbackData(propertyId: string, url: string, platform: Platfor
     propertyType: areaData.type,
     postcode: areaData.postcode,
     description: '',
-    images: [],
+    images: [randomImage],
     features: [],
     listingUrl: url,
     unknownFields: ['yearBuilt', 'councilTaxBand', 'tenure', 'epcRating', 'squareFeet'],
