@@ -77,7 +77,18 @@ export default function DealPilotPage() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background scanline">
-      <Header />
+      <Header onAgentsClick={() => {
+        // If on landing page, scroll to agents section; if in analysis, open agent dashboard
+        if (hasStarted && property && status === 'complete') {
+          setShowAgentDashboard(true)
+        } else {
+          // Scroll to agents section on landing page
+          const agentsSection = document.getElementById('agents-section')
+          if (agentsSection) {
+            agentsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }
+      }} />
 
       <main className="flex flex-1 overflow-hidden">
         <AnimatePresence mode="wait">

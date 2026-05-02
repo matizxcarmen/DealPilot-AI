@@ -4,7 +4,11 @@ import { motion } from 'framer-motion'
 import { Sparkles, Bot, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export function Header() {
+interface HeaderProps {
+  onAgentsClick?: () => void
+}
+
+export function Header({ onAgentsClick }: HeaderProps) {
   const scrollToInput = () => {
     const inputSection = document.querySelector('input[type="text"], input[type="url"]')
     if (inputSection) {
@@ -34,10 +38,13 @@ export function Header() {
       {/* Actions */}
       <div className="flex items-center gap-2">
         {/* Agent Status */}
-        <div className="mr-1 hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 sm:flex">
+        <button
+          onClick={onAgentsClick}
+          className="mr-1 hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 transition-all hover:border-primary/50 hover:bg-primary/20 hover:shadow-md hover:shadow-primary/10 sm:flex"
+        >
           <Bot className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-medium text-primary">4 Agents Ready</span>
-        </div>
+        </button>
 
         <Button
           variant="ghost"

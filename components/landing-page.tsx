@@ -193,7 +193,7 @@ export function LandingPage({ onSubmit, isAnalyzing, onReset, error, onClearErro
       </section>
 
       {/* Agents Section */}
-      <section className="border-t border-border/50 bg-card/30 px-4 py-16">
+      <section id="agents-section" className="border-t border-border/50 bg-card/30 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
